@@ -97,8 +97,12 @@
     }
 
     // ==================== AUTH ====================
+    let loginBusy = false;
     async function handleLogin(e) {
       e.preventDefault();
+      if (loginBusy) return;
+      loginBusy = true;
+      document.getElementById('login-error').classList.add('hidden');
       const u = document.getElementById('login-username').value;
       const p = document.getElementById('login-password').value;
       setLoading(true, 'Memverifikasi akun ke server...');
@@ -106,19 +110,18 @@
         const res = await callGasApi('loginUser', { username: u, password: p });
         setLoading(false);
         if (!res.success) {
-          showToast(res.message, 'error');
+          showBootstrapError(res.message || 'Login ditolak server.');
           return;
         }
         APP_STATE.token = res.token;
         APP_STATE.user = res.user;
         sessionStorage.setItem('gtk_portofolio_token', res.token);
         sessionStorage.setItem('gtk_portofolio_user', JSON.stringify(res.user));
-        showToast('Login berhasil! Selamat datang, ' + res.user.nama, 'success');
-        loadBootstrap();
+        if (await loadBootstrap()) showToast('Selamat datang, ' + res.user.nama, 'success');
       } catch (err) {
         setLoading(false);
-        showToast(err.message, 'error');
-      }
+        showBootstrapError(err.message);
+      } finally { loginBusy = false; setLoading(false); }
     }
 
     function handleLogout() {
@@ -137,9 +140,11 @@
         setLoading(false);
         if (!res.success) {
           showToast(res.message, 'error');
-          handleLogout();
-          return;
+          showView('login');
+          showBootstrapError(res.message || 'Dashboard gagal dimuat.');
+          return false;
         }
+        if (!['Peserta', 'Verifikator', 'Super Admin'].includes(res.peran)) throw new Error('Peran akun tidak dikenali: ' + res.peran);
         APP_STATE.bootstrap = res;
         if (res.peran === 'Peserta') {
           renderPesertaDashboard();
@@ -151,11 +156,22 @@
           renderAdminDashboard();
           showView('admin');
         }
+        document.getElementById('login-error').classList.add('hidden');
+        document.getElementById('retry-dashboard').classList.add('hidden');
+        return true;
       } catch (err) {
         setLoading(false);
         showView('login');
-        showToast('Gagal memuat data: ' + err.message + ' Silakan masuk kembali.', 'error');
+        showBootstrapError('Gagal memuat dashboard: ' + err.message);
+        return false;
       }
+    }
+
+    function showBootstrapError(message) {
+      const box = document.getElementById('login-error');
+      box.textContent = message;
+      box.classList.remove('hidden');
+      document.getElementById('retry-dashboard').classList.toggle('hidden', !APP_STATE.token);
     }
 
     // ==================== PESERTA RENDERING ====================
