@@ -616,10 +616,19 @@
         <h3 class="text-base font-extrabold text-slate-900">Penugasan Tim Verifikator</h3>
         <form onsubmit="handleAddPenugasan(event)" class="flex flex-wrap gap-3 p-4 bg-slate-50 rounded-2xl border text-xs">
           <select id="tgs-verif" required class="p-2.5 border rounded-xl bg-white min-w-[180px]"></select>
-          <select id="tgs-peserta" class="p-2.5 border rounded-xl bg-white min-w-[200px]">
-            <option value="ALL">Semua Peserta (ALL)</option>
+          <select id="tgs-kategori" aria-label="Kategori" required class="p-2.5 border rounded-xl bg-white">
+            <option value="">Pilih kategori</option>
+            <option>Guru Berdedikasi</option>
+            <option>Guru Berprestasi</option>
+            <option>Kepala Sekolah Berprestasi</option>
           </select>
-          <input type="text" id="tgs-komponen" value="A,B,C,D,E,F" placeholder="Komponen (mis: A,B,C)" class="p-2.5 border rounded-xl bg-white" />
+          <select id="tgs-jenjang" aria-label="Jenjang" required class="p-2.5 border rounded-xl bg-white">
+            <option value="">Pilih jenjang</option>
+            <option>TK/PAUD/RA</option>
+            <option>SD/MI</option>
+            <option>SMP/MTs</option>
+            <option>SMA/SMK/MA</option>
+          </select>
           <button type="submit" class="px-5 py-2.5 bg-blue-600 text-white font-bold rounded-xl">+ Simpan Penugasan</button>
         </form>
         <div class="overflow-x-auto rounded-xl border border-slate-200">
@@ -628,8 +637,8 @@
               <tr class="bg-slate-100 border-b">
                 <th class="p-3">ID Tugas</th>
                 <th class="p-3">ID Verifikator</th>
-                <th class="p-3">Sasaran Peserta</th>
-                <th class="p-3">Komponen</th>
+                <th class="p-3">Kategori</th>
+                <th class="p-3">Jenjang</th>
                 <th class="p-3">Aktif</th>
               </tr>
             </thead>
@@ -753,6 +762,6 @@
 
   <script src="./config.js?v=2"></script>
   <script src="./api.js?v=2"></script>
-  <script src="./app.js?v=4"></script>
+  <script src="./app.js?v=6"></script>
 </body>
 </html>

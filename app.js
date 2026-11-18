@@ -742,7 +742,7 @@
               <div>
                 <h3 class="text-sm font-extrabold text-slate-900">${q.profil.nama} <span class="text-xs font-semibold text-slate-500">(KTA: ${q.profil.no_kta})</span></h3>
                 <p class="text-xs text-slate-500 mt-0.5">${q.profil.kategori} • ${q.profil.jenjang} • ${q.profil.asal_sekolah} (${q.profil.utusan_cabang})</p>
-                ${q.bestPractice ? `<p class="text-xs text-blue-800 font-semibold mt-1">Best Practice: "${q.bestPractice.judul_best_practice}" ${q.bestPractice.file_id ? `<button onclick="previewBestPracticeFile('${q.profil.id_peserta}')" class="underline ml-1 text-blue-600">[Lihat Naskah]</button>` : ''} ${q.bestPractice.link_video ? `<a href="${q.bestPractice.link_video}" target="_blank" class="underline ml-1 text-rose-600">[Buka Video]</a>` : ''}</p>` : ''}
+                ${q.bestPractice ? `<p class="text-xs text-blue-800 font-semibold mt-1">Best Practice: "${q.bestPractice.judul_best_practice}" ${q.bestPractice.file_id ? `<button onclick="previewBestPracticeFile('${q.profil.id_peserta}')" class="underline ml-1 text-blue-600">[Pratinjau Naskah]</button> ${tautanDriveVerifikator(q.bestPractice.file_id)}` : ''} ${q.bestPractice.link_video ? `<a href="${q.bestPractice.link_video}" target="_blank" class="underline ml-1 text-rose-600">[Buka Video]</a>` : ''}</p>` : ''}
               </div>
               <span class="px-3 py-1 rounded-full text-xs font-extrabold ${q.status.status_pengiriman === 'TERKIRIM' ? 'bg-blue-100 text-blue-800' : 'bg-slate-200 text-slate-700'}">
                 Status Peserta: ${q.status.status_pengiriman}
@@ -764,10 +764,13 @@
                         <p class="text-slate-500 mt-1">Klaim Peserta: <strong class="text-slate-800">${item.klasifikasi_klaim}</strong> | Penyelenggara: ${item.penyelenggara} (${item.tanggal_kegiatan})</p>
                         ${item.keterangan ? `<p class="text-slate-500 mt-0.5">Keterangan: ${item.keterangan}</p>` : ''}
                       </div>
+                      <div class="flex flex-wrap items-center gap-2">
+                        ${tautanDriveVerifikator(item.file_id)}
                       <button onclick="previewFile('${item.id_isian}', '${item.nama_file}')"
                         class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl shadow-2xs">
-                        Buka Dokumen Bukti (v${item.versi_berkas})
+                        Pratinjau Bukti (v${item.versi_berkas})
                       </button>
+                      </div>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-3 pt-3.5 border-t border-slate-200">
@@ -806,6 +809,11 @@
           </div>
         `;
       }).join('');
+    }
+
+    function tautanDriveVerifikator(fileId) {
+      if (!fileId || !/^[A-Za-z0-9_-]+$/.test(fileId)) return '';
+      return `<a href="https://drive.google.com/open?id=${fileId}" target="_blank" rel="noopener noreferrer" class="px-2 py-1 text-blue-700 font-bold underline">Buka di Drive ↗</a>`;
     }
 
     async function submitVerifikasi(idIsian) {
@@ -865,18 +873,16 @@
         </tr>
       `).join('');
 
-      const verifs = adminData.users.filter(u => u.peran === 'Verifikator');
+      const verifs = adminData.users.filter(u => u.peran === 'Verifikator' && u.aktif === 'YA');
       document.getElementById('tgs-verif').innerHTML = verifs.map(v => `<option value="${v.id_pengguna}">${v.nama} (${v.username})</option>`).join('');
-      document.getElementById('tgs-peserta').innerHTML = '<option value="ALL">Semua Peserta (ALL)</option>' +
-        adminData.rekap.map(r => `<option value="${r.id_peserta}">${r.nama} (${r.no_kta})</option>`).join('');
 
       document.getElementById('adm-tgs-tbody').innerHTML = adminData.penugasan.map(t => `
         <tr>
           <td class="p-3 font-mono">${t.id_penugasan}</td>
           <td class="p-3 font-bold">${t.id_verifikator}</td>
-          <td class="p-3">${t.id_peserta}</td>
-          <td class="p-3">${t.komponen}</td>
-          <td class="p-3">${t.aktif}</td>
+          <td class="p-3">${t.kategori || "Perlu diatur ulang"}</td>
+          <td class="p-3">${t.jenjang || "—"}</td>
+          <td class="p-3">${t.kategori && t.jenjang ? t.aktif : "TIDAK"}</td>
         </tr>
       `).join('');
 
@@ -1025,8 +1031,8 @@
       e.preventDefault();
       const data = {
         id_verifikator: document.getElementById('tgs-verif').value,
-        id_peserta: document.getElementById('tgs-peserta').value,
-        komponen: document.getElementById('tgs-komponen').value
+        kategori: document.getElementById('tgs-kategori').value,
+        jenjang: document.getElementById('tgs-jenjang').value
       };
       setLoading(true, 'Menyimpan penugasan...');
       try {
