@@ -192,11 +192,21 @@
         : 'px-3.5 py-1.5 rounded-full text-xs font-extrabold bg-amber-100 text-amber-800 border border-amber-200';
 
       document.getElementById('pst-total-skor').textContent = kalkulasi.totalSkor;
-      document.getElementById('pst-penilaian-status').textContent = kalkulasi.statusPenilaian;
+      document.getElementById('pst-penilaian-status').textContent = 'Usulan peserta';
       document.getElementById('pst-sched-pengisian').textContent = jadwal.pengisianAktif ? 'BUKA (' + jadwal.raw.JADWAL_PENGISIAN_SELESAI + ')' : 'TUTUP';
       document.getElementById('pst-sched-revisi').textContent = jadwal.revisiAktif ? 'BUKA (' + jadwal.raw.JADWAL_REVISI_SELESAI + ')' : 'TUTUP';
 
-      const hasBP = bestPractice && bestPractice.judul_best_practice && (bestPractice.file_id || bestPractice.link_video);
+      const hasBP = bestPractice && bestPractice.judul_best_practice && (pesertaVideo() ? /^https?:\/\//i.test(bestPractice.link_video) : bestPractice.file_id);
+      const video = pesertaVideo();
+      const inputLink = document.getElementById('bp-link-video');
+      const inputFile = document.getElementById('bp-file');
+      inputLink.parentElement.classList.toggle('hidden', !video);
+      inputFile.parentElement.classList.toggle('hidden', video);
+      inputLink.disabled = !video;
+      inputFile.disabled = video;
+      inputLink.required = video;
+      inputFile.required = !video && !(bestPractice && bestPractice.file_id);
+      document.getElementById('bp-instruksi').textContent = video ? 'Tempelkan tautan video karya yang dapat dibuka panitia.' : 'Unggah berkas naskah Best Practice atau Karya Nyata Anda.';
       const badgeBP = document.getElementById('badge-bp-status');
       badgeBP.textContent = hasBP ? 'Tersimpan' : 'Belum Diisi';
       document.getElementById('badge-porto-count').textContent = `${isian.length} Bukti`;
@@ -211,10 +221,10 @@
       const savedActions = document.getElementById('bp-saved-actions');
       const btnPrevBP = document.getElementById('btn-preview-bp');
       const btnVidBP = document.getElementById('btn-open-video-bp');
-      if (bestPractice && (bestPractice.file_id || bestPractice.link_video)) {
+      if (hasBP) {
         savedActions.classList.remove('hidden');
-        btnPrevBP.classList.toggle('hidden', !bestPractice.file_id);
-        if (bestPractice.link_video) {
+        btnPrevBP.classList.toggle('hidden', video || !bestPractice.file_id);
+        if (video && bestPractice.link_video) {
           btnVidBP.href = bestPractice.link_video;
           btnVidBP.classList.remove('hidden');
         } else {
@@ -352,7 +362,7 @@
       const { bestPractice, isian, statusPortofolio, kalkulasi, jadwal } = APP_STATE.bootstrap;
       document.getElementById('submit-total-poin-badge').textContent = `${kalkulasi.totalSkor} / 100 Poin`;
 
-      const hasBP = bestPractice && bestPractice.judul_best_practice && (bestPractice.file_id || bestPractice.link_video);
+      const hasBP = bestPractice && bestPractice.judul_best_practice && (pesertaVideo() ? /^https?:\/\//i.test(bestPractice.link_video) : bestPractice.file_id);
       const bpBox = document.getElementById('submit-bp-status-box');
       if (hasBP) {
         bpBox.className = 'p-4 rounded-2xl border border-emerald-200 bg-emerald-50/70 text-xs text-emerald-950 space-y-1';
@@ -389,13 +399,13 @@
               <tr>
                 <th class="p-3">Komponen Portofolio</th>
                 <th class="p-3 text-center">Status Bukti</th>
-                <th class="p-3 text-center">Skor Terhitung</th>
+                <th class="p-3 text-center">Poin Usulan</th>
               </tr>
             </thead>
             <tbody>${rows}</tbody>
             <tfoot class="bg-blue-50/90 font-extrabold">
               <tr>
-                <td class="p-3.5 text-slate-900" colspan="2">TOTAL POIN PORTOFOLIO (${kalkulasi.statusPenilaian.toUpperCase()})</td>
+                <td class="p-3.5 text-slate-900" colspan="2">TOTAL POIN USULAN PORTOFOLIO</td>
                 <td class="p-3.5 text-center text-blue-700 text-base">${kalkulasi.totalSkor} / 100</td>
               </tr>
             </tfoot>
@@ -420,12 +430,16 @@
     }
 
     // SIMPAN BEST PRACTICE
+    function pesertaVideo() {
+      return /dedikasi/i.test(APP_STATE.bootstrap.profil.kategori);
+    }
+
     function handleSaveBestPractice(e) {
       e.preventDefault();
       const judul = document.getElementById('bp-judul').value.trim();
-      const linkVideo = document.getElementById('bp-link-video').value.trim();
+      const linkVideo = pesertaVideo() ? document.getElementById('bp-link-video').value.trim() : '';
       const fileInput = document.getElementById('bp-file');
-      const file = fileInput.files[0];
+      const file = pesertaVideo() ? null : fileInput.files[0];
 
       if (file) {
         const reader = new FileReader();
@@ -644,7 +658,7 @@
 
     function confirmSubmitFinal() {
       const { bestPractice } = APP_STATE.bootstrap;
-      const hasBP = bestPractice && bestPractice.judul_best_practice && (bestPractice.file_id || bestPractice.link_video);
+      const hasBP = bestPractice && bestPractice.judul_best_practice && (pesertaVideo() ? /^https?:\/\//i.test(bestPractice.link_video) : bestPractice.file_id);
       if (!hasBP) {
         showToast('Naskah Best Practice (atau Link Video GTK Berdedikasi) wajib diisi dan disimpan sebelum Submit Kirim!', 'error');
         switchPesertaSection('bp');
