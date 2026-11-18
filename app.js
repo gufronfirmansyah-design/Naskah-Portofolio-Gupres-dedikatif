@@ -332,7 +332,7 @@
                 ${item.is_duplikat === 'YA' ? '<span class="px-2 py-0.5 bg-rose-100 text-rose-700 rounded-md text-[10px] font-bold">Duplikat (0 Poin)</span>' : ''}
               </div>
               <h4 class="text-sm font-extrabold text-slate-900">${item.nama_kegiatan}</h4>
-              <p class="text-xs text-slate-500">Penyelenggara: <strong class="font-semibold text-slate-700">${item.penyelenggara || '-'}</strong> • Tanggal: <strong class="font-semibold text-slate-700">${item.tanggal_kegiatan || '-'}</strong></p>
+              <p class="text-xs text-slate-500">${tab === 'A' ? 'Penerbit SK/KTA' : 'Penyelenggara'}: <strong class="font-semibold text-slate-700">${item.penyelenggara || '-'}</strong> • ${tab === 'A' ? 'Periode' : 'Tanggal'}: <strong class="font-semibold text-slate-700">${item.tanggal_kegiatan || '-'}</strong></p>
               ${item.catatan_verifikator ? `<div class="mt-2 p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-950"><strong>Catatan Verifikator:</strong> ${item.catatan_verifikator}</div>` : ''}
             </div>
             <div class="flex flex-wrap items-center gap-2 shrink-0">
@@ -496,8 +496,32 @@
     }
 
     // MODAL TAMBAH / EDIT ISIAN
+    const bidangOrganisasiPgri = [
+      ['inp-jenis', 'Jenis bukti organisasi *'],
+      ['inp-klasifikasi', 'Status anggota atau jabatan di PGRI *'],
+      ['inp-nama-kegiatan', 'Nama unit PGRI *', 'Misalnya PGRI Cabang Selat'],
+      ['inp-tanggal', 'Periode kepengurusan atau masa berlaku KTA *', 'Misalnya 2025–2030'],
+      ['inp-penyelenggara', 'Penerbit SK atau KTA *', 'Misalnya Pengurus PGRI Kabupaten Kapuas'],
+      ['inp-keterangan', 'Nomor SK atau KTA (opsional)', 'Isi sesuai dokumen bukti']
+    ];
+
+    function sesuaikanFormulirOrganisasi(komponen) {
+      for (const [id, judul, contoh] of bidangOrganisasiPgri) {
+        const input = document.getElementById(id);
+        const label = input.previousElementSibling;
+        if (label.dataset.judulAwal === undefined) label.dataset.judulAwal = label.textContent;
+        label.htmlFor = id;
+        label.textContent = komponen === 'A' ? judul : label.dataset.judulAwal;
+        if (contoh) {
+          if (input.dataset.contohAwal === undefined) input.dataset.contohAwal = input.placeholder;
+          input.placeholder = komponen === 'A' ? contoh : input.dataset.contohAwal;
+        }
+      }
+    }
+
     function openModalIsian(editItem = null) {
       const komp = APP_STATE.activeComp;
+      sesuaikanFormulirOrganisasi(komp);
       const rubrikKomp = APP_STATE.bootstrap.rubrik.filter(r => r.komponen === komp);
       const jenisUnik = [...new Set(rubrikKomp.map(r => r.jenis_kegiatan))];
 
